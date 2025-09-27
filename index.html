@@ -30,7 +30,6 @@
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
   <link rel="stylesheet" href="./static/css/index.css">
-  <link rel="icon" href="https://www.nus.edu.sg/images/favicon.ico" type="image/x-icon">
 
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -38,6 +37,13 @@
   <script src="./static/js/bulma-carousel.min.js"></script>
   <script src="./static/js/bulma-slider.min.js"></script>
   <script src="./static/js/index.js"></script>
+  <script type="text/javascript" async
+        src="https://polyfill.io/v3/polyfill.min.js?features=es6">
+  </script>
+  <script type="text/javascript" async
+            src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
 </head>
 <body>
 
@@ -226,22 +232,133 @@
     </div>
 </section>
 
-    <footer class="footer">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="column is-8">
-                    <div class="content">
-                        <p>
-                            This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
-                        </p>
-                        <p>
-                            Website adapted from <a href="https://github.com/nerfies/nerfies.github.io">nerfies</a> and <a href="https://joonghyuk.com/instantdrag-web/">InstantDrag</a>.
-                        </p>
-                    </div>
+<section class="section">
+    <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Method</h2>
+        <h3 class="title is-4">Applying Common Approximate Class Unlearning Approach to ADU</h3>
+        <div class="content has-text-justified">
+          <p>
+            The common approach to the conventional approximate class unlearning is to use two different loss functions; one for retaining the classification accuracy for the classes to be retained and the other for reducing the accuracy for those to be forgotten.
+          </p>
+          <p>
+            Given this idea, a straightforward approach to ADU would be to adapt these two loss functions, that is, minimizing 
+            \( \mathcal{L}_{\mathrm{memorize}} \) for 
+            \( \{(x, y, d) \mid d \in \mathcal{D}_{\text{memorize}}\} \) 
+            and 
+            \( \mathcal{L}_{\mathrm{forget}} \) for 
+            \( \{(x, y, d) \mid d \in \mathcal{D}_{\text{forget}}\} \).
+          </p>
+          <p>
+            However, as we will show later in our experiments, this straightforward approach alone is insufficient to achieve satisfactory ADU performance.
+          </p>
+          <p>
+            This is primarily due to the strong domain generalization capability of pre-trained VLMs.
+          </p>
+          <p>
+            As evidenced by their robustness to domain shifts, the latent space of VLMs highly aligns data distributions across different domains, meaning that covariate shifts are minimal.  
+          </p>
+          <p>
+            Consequently, the feature distributions across different domains are highly entangled, making it difficult to effectively control memorization and forgetting on a per-domain basis.
+          </p>
+        </div>
+        <h3 class="title is-4">Reward-Adaptive Time-Rescaled Langevin SDE</h3>
+        <div class="content has-text-centered">
+            <img src="./static/images/algorithm_v2.png" alt="Reward-Adaptive Time-Rescaled Langevin SDE" width="50%">
+        </div>
+        <div class="content has-text-justified">
+            <p>
+                We introduce <b>Reward-Guided Langevin Dynamics</b>, to efficiently sample a latent representation \(\mathbf{x}\) from the optimal reward-aligned distribution. Unlike traditional gradient ascent, which may get stuck in local optima, this approach incorporates stochasticity, leading to the following simple discretized update rule: <br>
+                \[ \mathbf{x}_{i+1} = \sqrt{1-\gamma}\, \mathbf{x}_i + \gamma\eta \nabla \hat{\mathcal{R}}(\mathbf{x}_i) + \sqrt{\gamma} \epsilon_{i}. \]
+                Note that for implementation, this requires only <b>a single line of code</b>, to add Gaussian noise \(\epsilon_i \sim \mathcal{N}(0, \mathbf{I})\) to the latent representation. <br><br>
+
+                To further enhance convergence speed and performance, we introduce <b>Reward-Adaptive Time Rescaling</b>, modifying the Langevin process with a monitor function \(\mathcal{G}(\hat{\mathcal{R}}(\mathbf{x}))\) that dynamically adjusts the step size based on the reward: <br>
+                \[ \mathbf{x}_{i+1} =\sqrt{1-\gamma(\mathbf{x}_i)}\mathbf{x}_i + \gamma(\mathbf{x}_i)\eta\,\nabla \hat{\mathcal{R}}(\mathbf{x}_i) + \frac{1}{2}\gamma(\mathbf{x}_i)\nabla\log \mathcal{G}(\hat{\mathcal{R}}(\mathbf{x}_i)) + \sqrt{\gamma(\mathbf{x}_i)}\,\epsilon_i. \]
+
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Experimental Results</h2>
+        <h3 class="title is-4">Experimental Setup</h3>
+        <div class="content has-text-justified">
+            <p>
+                We introduce ORIBENCH benchmark based on the MS-COCO dataset, that consist of diverse text prompts, image and ground truth orientations.<br>
+                <b>1. ORIBENCH-Single</b>: Single Object Scenario, total 1000 prompts, various azimuths.<br>
+                <b>2. ORIBENCH-Multi</b>: Multi Object Scenario, total 371 prompts, various azimuths.<br>
+                For more evaluation (General Orientation, primitive views), please refer to the Appendix of the paper.
+            </p>
+        </div>
+        <h3 class="title is-4">Quantitative Results</h3>
+        <div class="content has-text-centered">
+            <img src="./static/images/quantitative_v2.png" alt="Quantitative Results" width="80%">
+        </div>
+        <div class="content has-text-justified">
+            <p>
+                We measure <b>orientation grounding accuracy</b> using two metrics: <br>
+                <b>1) Absolute Error,</b> the absolute error on azimuth angles between the predicted and grounding object orientations. <br>
+                <b>2) Acc.@22.5°,</b> the angular accuracy within a tolerance of ±22.5°. <br>
+                For evaluation, we use OrientAnything to predict the 3D orientation from the generated images. <br>
+                In the case of <b>text-image alignment,</b> we use three metrics: <b>CLIP Score</b>, <b>VQA-Score</b>, and <b>PickScore</b>.
+            </p>
+        </div>
+        <h3 class="title is-4">ORIBENCH-Single</h3>
+        <div class="content has-text-centered">
+            <img src="./static/images/quali/quali_single_v2.png" alt="MS-COCO-Single" width="100%">
+        </div>
+        <div class="content has-text-justified">
+            <p>
+                C3DW (Cheng et al.) is trained on synthetic data to learn orientation-to-image generation. Thus, it has limited generalizability to real-world images and the output images lack realism.
+                Zero-1-to-3 (Liu et al.) is also trained on single-object images but without backgrounds, requiring additional background image composition that may introduce unnatrual artifacts.
+                The existing methods (DPS, MPGD, FreeDoM, ReNO) on guided generation methods also achieve suboptimal results compared to ORIGEN.
+            </p>
+        </div>
+        <h3 class="title is-4">ORIBENCH-Multi</h3>
+        <div class="content has-text-centered">
+            <div class="image-container">
+                <img src="./static/images/quali/quali_multi_v2.png" alt="MS-COCO-NView" width="100%"> 
+            </div>
+        </div>
+        <div class="content has-text-justified">
+            <p>   
+                ORIGEN outperforms all baseline models in orientation alignment. While FLUX-Schnell achieves the highest alignment among vanilla T2I models, ORIGEN surpasses it by over 2.5 times in the 3-view setting (82.4% vs. 31.2%) and over 2 times in the 4-view setting (86.6% vs. 42.4%). 
+                This highlights the limitations of vanilla T2I models, which struggle with precise orientation control due to the ambiguity in textual descriptions. 
+                Unlike these models, ORIGEN consistently generates images that accurately align with the specified orientations.
+            </p>
+        </div>
+        <h3 class="title is-4">User Study</h3>
+        <div class="content has-text-centered">
+            <img src="./static/images/user_study.jpg" alt="User study results" width="50%">
+        </div>
+        <div class="content has-text-justified">
+            <p>
+                The input prompt and images generated by three models (Zero-1-to-3, C3DW, and ORIGEN) were provided, and participants were asked to select the image that best reflected both the input prompt and the grounding orientation. 
+                As a result, ORIGEN was preferred by 58.18% of the participants, outperforming the baseline models.
+            </p>
+        </div>
+    </div>
+</section>
+
+
+
+<footer class="footer">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-8">
+                <div class="content">
+                    <p>
+                        This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+                    </p>
+                    <p>
+                        Website adapted from <a href="https://github.com/nerfies/nerfies.github.io">nerfies</a> and <a href="https://joonghyuk.com/instantdrag-web/">InstantDrag</a>.
+                    </p>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
+</footer>
 
 
 
