@@ -74,7 +74,7 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Approximate Domain Unlearning for Vision-Language Models</h1>
+          <h1 class="title is-1 publication-title">Approximate Domain Unlearning <br> for Vision-Language Models</h1>
           <div class="is-size-5 publication-authors">
             <span class="author-block">
               <a href="https://kodaikawamura.github.io/kodaikawamura/">Kodai Kawamura*</a><sup>*1,2</sup>,</span>
@@ -165,7 +165,7 @@
 </section>
 
 <div class="content has-text-centered">
-    <img src="./static/images/overview.png" alt="Illustration of Approximate Domain Unlearning (ADU)" width="80%">
+    <img src="./static/images/overview.png" alt="Illustration of Approximate Domain Unlearning (ADU)" width="50%">
 </div>
 
 <section class="section">
@@ -196,11 +196,10 @@
     <div class="container is-max-desktop">
         <h2 class="title is-3 has-text-centered">Approximate Domain Unlearning</h2>
         <div class="content has-text-centered">
-            <img src="./static/images/fig1.png" alt="Illustration of Approximate Domain Unlearning (ADU)" width="80%">
+            <img src="./static/images/fig1.png" alt="Illustration of Approximate Domain Unlearning (ADU)" width="50%">
         </div>
         <div class="content has-text-justified">
-            <p>Approximate Domain Unlearning (ADU) is a novel approximate unlearning problem introduced in this paper. </p>
-            <p>Unlike existing approximate class unlearning tasks, ADU requires retraining a pre-trained Vision-Language Model (VLM) so that it cannot recognize images from specified domains (painting, clipart, sketch in the figure) while preserving its ability to recognize images from other domains (real in the figure). </p>
+            <p>Approximate Domain Unlearning (ADU) is a novel approximate unlearning problem introduced in this paper. Unlike existing approximate class unlearning tasks, ADU requires retraining a pre-trained Vision-Language Model (VLM) so that it cannot recognize images from specified domains (painting, clipart, sketch in the figure) while preserving its ability to recognize images from other domains (real in the figure). </p>
         </div>
         <h3 class="title is-4">Problem Setting</h3>
         <div class="content has-text-justified">
@@ -212,17 +211,11 @@
             \( d \in \mathcal{D} \) is the domain label, with
             \( \mathcal{C} \) and \( \mathcal{D} \) denoting the sets of all classes
             and domains, respectively.
-          </p>
-
-          <p class="math-block">
             We define
             \( \mathcal{D}_{\text{memorize}} \subset \mathcal{D} \)
             as the set of domains to be preserved and
             \( \mathcal{D}_{\text{forget}} = \mathcal{D} \setminus \mathcal{D}_{\text{memorize}} \)
             as the set of domains to be forgotten.
-          </p>
-
-          <p class="math-block">
             Our goal is to retrain a pre-trained vision-language model \( f \) to
             maintain the classification accuracy for
             \( \{(\mathbf{x}, y, d) \mid d \in \mathcal{D}_{\text{memorize}}\} \),
@@ -263,9 +256,6 @@
           </p>
         </div>
         <h3 class="title is-4">Domain Disentangling Loss (DDL)</h3>
-        <div class="content has-text-centered">
-            <img src="./static/images/algorithm_v2.png" alt="Reward-Adaptive Time-Rescaled Langevin SDE" width="50%">
-        </div>
         <div class="content has-text-justified">
           <p>
             To address this issue, we propose Domain Disentangling Loss (DDL), which aims to explicitly disentangle the feature distributions among different domains in the latent feature space.
@@ -340,7 +330,7 @@
 
         <h3 class="title is-4">Instance-wise Prompt Generator (InstaPG)</h3>
         <div class="content has-text-centered">
-            <img src="./static/images/instaPG.png" alt="Reward-Adaptive Time-Rescaled Langevin SDE" width="50%">
+            <img src="./static/images/instaPG.png" alt="Reward-Adaptive Time-Rescaled Langevin SDE" width="40%">
         </div>
         <div class="content has-text-justified">
         <p>
@@ -373,16 +363,10 @@
           <p>
             The average performance of all possible combinations of the domains to be forgotten/retained are reported for various numbers of domains to be forgotten 
             \( |D_{\text{forget}}| \in \{1, 2, 3\} \). ImageNet has only two domains, so only the case \( |D_{\text{forget}}| = 1 \) is tested.
-          </p>
-
-          <p>
             Performance is evaluated using the three metrics:  
             (i) <strong>Mem</strong>: the accuracy of the classes for data from memorized domains,  
             (ii) <strong>For</strong>: the error of the classes for data from forgotten domains, and  
             (iii) <strong>H</strong>: the harmonic mean of Mem and For. Higher values mean better performance.
-          </p>
-
-          <p>
             The <em>Baseline</em> in the table refers to the method that trains the vision prompt using 
             \( \mathcal{L}_{\mathrm{memorize}} \) and \( \mathcal{L}_{\mathrm{forget}} \).
           </p>
@@ -393,15 +377,15 @@
         </div>
         <div class="content has-text-justified">
           <p>
-            We showcase the attention heatmaps&nbsp;\citep{selvaraju2017grad} before and after applying our method on the DomainNet Mini dataset in Fig.~\ref{fig: qualitative results}, where the domain to be forgotten is <em>real</em>.
+            We showcase the attention heatmaps before and after applying our method, where the domain to be forgotten is real.
           </p>
 
           <p>
-            For the forgetting data, the Zero-shot CLIP attention concentrates on the objects. After applying our method, the attention on the objects disappears or significantly weakens for the data from the domain to be forgotten (i.e., <em>real</em>).
+            For the forgetting data, the Zero-shot CLIP attention concentrates on the objects. After applying our method, the attention on the objects disappears or significantly weakens for the data from the domain to be forgotten (i.e., real).
           </p>
 
           <p>
-            For the data from the domain to be memorized (i.e., <em>painting</em>, <em>clipart</em>, and <em>sketch</em>), our method fully maintains or strengthens previous attention on the objects.
+            For the data from the domain to be memorized (i.e., painting, clipart, and sketch), our method fully maintains or strengthens previous attention on the objects.
           </p>
 
           <p>
