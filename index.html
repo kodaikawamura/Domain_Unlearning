@@ -240,34 +240,23 @@
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
-            We present the first method capable of photorealistically reconstructing a non-rigidly
-            deforming scene using photos/videos captured casually from mobile phones.
+            Pre-trained Vision-Language Models (VLMs) exhibit strong generalization capabilities, enabling them to recognize a wide range of objects across diverse domains without additional training. 
+            However, they often retain irrelevant information beyond the requirements of specific target downstream tasks, raising concerns about computational efficiency and potential information leakage. 
+            This has motivated growing interest in approximate unlearning, which aims to selectively remove unnecessary knowledge while preserving overall model performance.
           </p>
           <p>
-            Our approach augments neural radiance fields
-            (NeRF) by optimizing an
-            additional continuous volumetric deformation field that warps each observed point into a
-            canonical 5D NeRF.
-            We observe that these NeRF-like deformation fields are prone to local minima, and
-            propose a coarse-to-fine optimization method for coordinate-based models that allows for
-            more robust optimization.
-            By adapting principles from geometry processing and physical simulation to NeRF-like
-            models, we propose an elastic regularization of the deformation field that further
-            improves robustness.
+            Existing approaches to approximate unlearning have primarily focused on class unlearning, where a VLM is retrained to fail to recognize specified object classes while maintaining accuracy for others. 
+            However, merely forgetting object classes is often insufficient in practical applications. 
+            For instance, an autonomous driving system should accurately recognize real cars, while avoiding misrecognition of illustrated cars depicted in roadside advertisements as real cars, which could be hazardous. 
+            In this paper, we introduce Approximate Domain Unlearning (ADU), a novel problem setting that requires reducing recognition accuracy for images from specified domains (e.g., illustration) while preserving accuracy for other domains (e.g., real).           
           </p>
           <p>
-            We show that <span class="dnerf">Nerfies</span> can turn casually captured selfie
-            photos/videos into deformable NeRF
-            models that allow for photorealistic renderings of the subject from arbitrary
-            viewpoints, which we dub <i>"nerfies"</i>. We evaluate our method by collecting data
-            using a
-            rig with two mobile phones that take time-synchronized photos, yielding train/validation
-            images of the same pose at different viewpoints. We show that our method faithfully
-            reconstructs non-rigidly deforming scenes and reproduces unseen views with high
-            fidelity.
+            ADU presents new technical challenges: due to the strong domain generalization capability of pre-trained VLMs, domain distributions are highly entangled in the feature space, making naive approaches based on penalizing target domains ineffective. 
+            To tackle this limitation, we propose a novel approach that explicitly disentangles domain distributions and adaptively captures instance-specific domain information.
           </p>
-        </div>
-      </div>
+          <p>
+             Extensive experiments on three multi-domain benchmark datasets demonstrate that our approach significantly outperforms strong baselines built upon state-of-the-art VLM tuning techniques, paving the way for practical and fine-grained unlearning in VLMs.
+          </p>
     </div>
     <!--/ Abstract. -->
 
