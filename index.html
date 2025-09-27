@@ -74,7 +74,7 @@
     <div class="container is-max-desktop">
       <div class="columns is-centered">
         <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Nerfies: Deformable Neural Radiance Fields</h1>
+          <h1 class="title is-1 publication-title">Approximate Domain Unlearning for Vision-Language Models</h1>
           <div class="is-size-5 publication-authors">
             <span class="author-block">
               <a href="https://kodaikawamura.github.io/kodaikawamura/">Kodai Kawamura*</a><sup>*1,2</sup>,</span>
@@ -164,6 +164,9 @@
   </div>
 </section>
 
+<div class="content has-text-centered">
+    <img src="./static/images/overview.png" alt="Illustration of Approximate Domain Unlearning (ADU)" width="80%">
+</div>
 
 <section class="section">
   <div class="container is-max-desktop">
@@ -193,7 +196,7 @@
     <div class="container is-max-desktop">
         <h2 class="title is-3 has-text-centered">Approximate Domain Unlearning</h2>
         <div class="content has-text-centered">
-            <img src="./static/images/fig1.pdf" alt="Illustration of Approximate Domain Unlearning (ADU)" width="80%">
+            <img src="./static/images/fig1.png" alt="Illustration of Approximate Domain Unlearning (ADU)" width="80%">
         </div>
         <div class="content has-text-justified">
             <p>Approximate Domain Unlearning (ADU) is a novel approximate unlearning problem introduced in this paper. </p>
@@ -259,20 +262,102 @@
             Consequently, the feature distributions across different domains are highly entangled, making it difficult to effectively control memorization and forgetting on a per-domain basis.
           </p>
         </div>
-        <h3 class="title is-4">Reward-Adaptive Time-Rescaled Langevin SDE</h3>
+        <h3 class="title is-4">Domain Disentangling Loss (DDL)</h3>
         <div class="content has-text-centered">
             <img src="./static/images/algorithm_v2.png" alt="Reward-Adaptive Time-Rescaled Langevin SDE" width="50%">
         </div>
         <div class="content has-text-justified">
-            <p>
-                We introduce <b>Reward-Guided Langevin Dynamics</b>, to efficiently sample a latent representation \(\mathbf{x}\) from the optimal reward-aligned distribution. Unlike traditional gradient ascent, which may get stuck in local optima, this approach incorporates stochasticity, leading to the following simple discretized update rule: <br>
-                \[ \mathbf{x}_{i+1} = \sqrt{1-\gamma}\, \mathbf{x}_i + \gamma\eta \nabla \hat{\mathcal{R}}(\mathbf{x}_i) + \sqrt{\gamma} \epsilon_{i}. \]
-                Note that for implementation, this requires only <b>a single line of code</b>, to add Gaussian noise \(\epsilon_i \sim \mathcal{N}(0, \mathbf{I})\) to the latent representation. <br><br>
+          <p>
+            To address this issue, we propose Domain Disentangling Loss (DDL), which aims to explicitly disentangle the feature distributions among different domains in the latent feature space.
+          </p>
 
-                To further enhance convergence speed and performance, we introduce <b>Reward-Adaptive Time Rescaling</b>, modifying the Langevin process with a monitor function \(\mathcal{G}(\hat{\mathcal{R}}(\mathbf{x}))\) that dynamically adjusts the step size based on the reward: <br>
-                \[ \mathbf{x}_{i+1} =\sqrt{1-\gamma(\mathbf{x}_i)}\mathbf{x}_i + \gamma(\mathbf{x}_i)\eta\,\nabla \hat{\mathcal{R}}(\mathbf{x}_i) + \frac{1}{2}\gamma(\mathbf{x}_i)\nabla\log \mathcal{G}(\hat{\mathcal{R}}(\mathbf{x}_i)) + \sqrt{\gamma(\mathbf{x}_i)}\,\epsilon_i. \]
+          <p>
+            The core idea is that if the feature distributions of individual domains are well-separated, the domain label \( d \) of a given sample \( \mathbf{x} \) can be accurately predicted, and vice versa.
+          </p>
 
-            </p>
+          <p>
+            Based on this insight, DDL encourages the domain label of a sample to be predictable from its latent feature through an auxiliary domain classifier.
+          </p>
+
+          <p>
+            More specifically, we introduce a standard cross-entropy loss that requires the model to correctly predict the domain labels of the samples:
+          </p>
+
+          <p>
+          \[
+          \mathcal{L}_{\mathrm{CE}}(\mathcal{B})=-\frac{1}{|\mathcal{B}|}\sum_{i=1}^{|\mathcal{B}|} \sum_{j=1}^{|\mathcal{D}|} d_{ij}\log p^d_{ij},
+          \]
+          </p>
+
+          <p>
+            where \( \mathbf{p}_i^d=(p^d_{i1}, p^d_{i2}, \dots, p^d_{i|\mathcal{D}|}) \) represents the confidence scores of a sample \( \mathbf{x}_i \) output by the domain classifier (a fully connected layer), and \( \mathbf{d}_i=(d_{i1}, d_{i2}, \dots, d_{i|\mathcal{D}|}) \) is the one-hot encoding of the domain label \( d_i \).
+          </p>
+
+          <p>
+            To further enhance domain separability, we additionally incorporate the maximum mean discrepancy (MMD) into DDL as an auxiliary loss term. MMD estimates the pairwise distance between domain distributions in a reproducing kernel Hilbert space (RKHS) as:
+          </p>
+
+          <p>
+          \[
+          \text{MMD}^2(\mathcal{B}) = 
+          \frac{2}{|\mathcal{D}|(|\mathcal{D}|-1)} \sum_{1 \leq d < d' \leq |\mathcal{D}|} 
+          \left\| 
+          \frac{1}{|\mathcal{B}_d|} \sum_{\mathbf{x}_i \in \mathcal{B}_d} \phi(\mathbf{x}_i) - 
+          \frac{1}{|\mathcal{B}_{d'}|} \sum_{\mathbf{x}_j \in \mathcal{B}_{d'}} \phi(\mathbf{x}_j) 
+          \right\|_{\mathcal{H}}^2,
+          \]
+          </p>
+
+          <p>
+            where \( \phi \) denotes a kernel-induced feature mapping, \( \mathcal{B}_d \) is a subset of mini-batch \( \mathcal{B} \) within the domain \( d \in \mathcal{D} \).
+            Intuitively, maximizing MMD increases the inter-domain divergence in the latent space.
+          </p>
+
+          <p>
+            Given the above formulations, our final DDL loss is defined as:
+          </p>
+
+          <p>
+          \[
+          \mathcal{L}_{\mathrm{domain}}(\mathcal{B}) = \gamma \mathcal{L}_{\mathrm{CE}}(\mathcal{B}) - \lambda \text{MMD}^2(\mathcal{B}),
+          \]
+          </p>
+
+          <p>
+            where \( \gamma \) and \( \lambda \) are balancing hyperparameters.
+          </p>
+
+          <p>
+            Combining with the standard loss functions \( \mathcal{L}_{\mathrm{memorize}} \) and \( \mathcal{L}_{\mathrm{forget}} \), the learnable prompts and the domain classifier are jointly optimized by minimizing the total loss:
+          </p>
+
+          <p>
+          \[
+          \mathcal{L}_{\mathrm{total}}(\mathcal{B}) = \mathcal{L}_{\mathrm{memorize}}(\mathcal{B}) + \mathcal{L}_{\mathrm{forget}}(\mathcal{B}) + \mathcal{L}_{\mathrm{domain}}(\mathcal{B}).
+          \]
+          </p>
+        </div>
+
+        <h3 class="title is-4">Instance-wise Prompt Generator (InstaPG)</h3>
+        <div class="content has-text-centered">
+            <img src="./static/images/instaPG.png" alt="Reward-Adaptive Time-Rescaled Langevin SDE" width="50%">
+        </div>
+        <div class="content has-text-justified">
+        <p>
+          Domain is often ambiguous. The term “illustration,” for example, encompasses a broad spectrum of styles, from highly realistic renderings that closely resemble real-world images to highly stylized depictions resembling clipart, with each image varying in style.
+        </p>
+
+        <p>
+          Given this nature of the domain, only a learnable prompt that is uniform across all the images cannot account for such an instance-level variation in the images, which may degrade the performance of domain unlearning.
+        </p>
+
+        <p>
+          To address this problem, we introduce an Instance-wise Prompt Generator (InstaPG) to adjust the learnable vision prompts according to the input image patches. The illustration is given in Fig.~\ref{fig: InstaPG}.
+        </p>
+
+        <p>
+          InstaPG is embedded in intermediate layers (i.e., the Transformer block) of the image encoder to generate additional instance-wise prompts to be fed to the subsequent layer via a cross-attention mechanism, where the learnable vision prompts serve as queries, while the image patch features act as keys and values. The generated prompts are conditioned on the input image patch features, allowing the model to effectively capture the property of the input image.
+        </p>
         </div>
     </div>
 </section>
@@ -280,85 +365,38 @@
 <section class="section">
     <div class="container is-max-desktop">
         <h2 class="title is-3 has-text-centered">Experimental Results</h2>
-        <h3 class="title is-4">Experimental Setup</h3>
-        <div class="content has-text-justified">
-            <p>
-                We introduce ORIBENCH benchmark based on the MS-COCO dataset, that consist of diverse text prompts, image and ground truth orientations.<br>
-                <b>1. ORIBENCH-Single</b>: Single Object Scenario, total 1000 prompts, various azimuths.<br>
-                <b>2. ORIBENCH-Multi</b>: Multi Object Scenario, total 371 prompts, various azimuths.<br>
-                For more evaluation (General Orientation, primitive views), please refer to the Appendix of the paper.
-            </p>
-        </div>
         <h3 class="title is-4">Quantitative Results</h3>
         <div class="content has-text-centered">
-            <img src="./static/images/quantitative_v2.png" alt="Quantitative Results" width="80%">
+            <img src="./static/images/table.png" alt="table" width="100%">
         </div>
         <div class="content has-text-justified">
             <p>
-                We measure <b>orientation grounding accuracy</b> using two metrics: <br>
-                <b>1) Absolute Error,</b> the absolute error on azimuth angles between the predicted and grounding object orientations. <br>
-                <b>2) Acc.@22.5°,</b> the angular accuracy within a tolerance of ±22.5°. <br>
-                For evaluation, we use OrientAnything to predict the 3D orientation from the generated images. <br>
-                In the case of <b>text-image alignment,</b> we use three metrics: <b>CLIP Score</b>, <b>VQA-Score</b>, and <b>PickScore</b>.
-            </p>
+           
+           </p>
         </div>
-        <h3 class="title is-4">ORIBENCH-Single</h3>
+        <h3 class="title is-4">Qualitative Results</h3>
         <div class="content has-text-centered">
-            <img src="./static/images/quali/quali_single_v2.png" alt="MS-COCO-Single" width="100%">
+            <img src="./static/images/attention_map.png" alt="attention map" width="80%">
         </div>
         <div class="content has-text-justified">
-            <p>
-                C3DW (Cheng et al.) is trained on synthetic data to learn orientation-to-image generation. Thus, it has limited generalizability to real-world images and the output images lack realism.
-                Zero-1-to-3 (Liu et al.) is also trained on single-object images but without backgrounds, requiring additional background image composition that may introduce unnatrual artifacts.
-                The existing methods (DPS, MPGD, FreeDoM, ReNO) on guided generation methods also achieve suboptimal results compared to ORIGEN.
-            </p>
-        </div>
-        <h3 class="title is-4">ORIBENCH-Multi</h3>
-        <div class="content has-text-centered">
-            <div class="image-container">
-                <img src="./static/images/quali/quali_multi_v2.png" alt="MS-COCO-NView" width="100%"> 
-            </div>
-        </div>
-        <div class="content has-text-justified">
-            <p>   
-                ORIGEN outperforms all baseline models in orientation alignment. While FLUX-Schnell achieves the highest alignment among vanilla T2I models, ORIGEN surpasses it by over 2.5 times in the 3-view setting (82.4% vs. 31.2%) and over 2 times in the 4-view setting (86.6% vs. 42.4%). 
-                This highlights the limitations of vanilla T2I models, which struggle with precise orientation control due to the ambiguity in textual descriptions. 
-                Unlike these models, ORIGEN consistently generates images that accurately align with the specified orientations.
-            </p>
-        </div>
-        <h3 class="title is-4">User Study</h3>
-        <div class="content has-text-centered">
-            <img src="./static/images/user_study.jpg" alt="User study results" width="50%">
-        </div>
-        <div class="content has-text-justified">
-            <p>
-                The input prompt and images generated by three models (Zero-1-to-3, C3DW, and ORIGEN) were provided, and participants were asked to select the image that best reflected both the input prompt and the grounding orientation. 
-                As a result, ORIGEN was preferred by 58.18% of the participants, outperforming the baseline models.
-            </p>
+          <p>
+            We showcase the attention heatmaps&nbsp;\citep{selvaraju2017grad} before and after applying our method on the DomainNet Mini dataset in Fig.~\ref{fig: qualitative results}, where the domain to be forgotten is <em>real</em>.
+          </p>
+
+          <p>
+            For the forgetting data, the Zero-shot CLIP attention concentrates on the objects. After applying our method, the attention on the objects disappears or significantly weakens for the data from the domain to be forgotten (i.e., <em>real</em>).
+          </p>
+
+          <p>
+            For the data from the domain to be memorized (i.e., <em>painting</em>, <em>clipart</em>, and <em>sketch</em>), our method fully maintains or strengthens previous attention on the objects.
+          </p>
+
+          <p>
+            Our method suppresses prediction sensitivity for data from domains to be forgotten while preserving or enhancing sensitivity for data from domains to be memorized, enabling the model to effectively forget unwanted domain information while maintaining high accuracy on the retained domains.
+          </p>
         </div>
     </div>
 </section>
-
-
-
-<footer class="footer">
-    <div class="container">
-        <div class="columns is-centered">
-            <div class="column is-8">
-                <div class="content">
-                    <p>
-                        This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
-                    </p>
-                    <p>
-                        Website adapted from <a href="https://github.com/nerfies/nerfies.github.io">nerfies</a> and <a href="https://joonghyuk.com/instantdrag-web/">InstantDrag</a>.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
-
-
 
 
 <section class="section" id="BibTeX">
