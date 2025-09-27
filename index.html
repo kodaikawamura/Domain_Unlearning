@@ -370,9 +370,22 @@
             <img src="./static/images/table.png" alt="table" width="100%">
         </div>
         <div class="content has-text-justified">
-            <p>
-           
-           </p>
+          <p>
+            The average performance of all possible combinations of the domains to be forgotten/retained are reported for various numbers of domains to be forgotten 
+            \( |D_{\text{forget}}| \in \{1, 2, 3\} \). ImageNet has only two domains, so only the case \( |D_{\text{forget}}| = 1 \) is tested.
+          </p>
+
+          <p>
+            Performance is evaluated using the three metrics:  
+            (i) <strong>Mem</strong>: the accuracy of the classes for data from memorized domains,  
+            (ii) <strong>For</strong>: the error of the classes for data from forgotten domains, and  
+            (iii) <strong>H</strong>: the harmonic mean of Mem and For. Higher values mean better performance.
+          </p>
+
+          <p>
+            The <em>Baseline</em> in the table refers to the method that trains the vision prompt using 
+            \( \mathcal{L}_{\mathrm{memorize}} \) and \( \mathcal{L}_{\mathrm{forget}} \).
+          </p>
         </div>
         <h3 class="title is-4">Qualitative Results</h3>
         <div class="content has-text-centered">
